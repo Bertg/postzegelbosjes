@@ -1,0 +1,21 @@
+name: "📊 Ghent postzegelbosjes report"
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron:  "0 12 * * 1-5"
+
+jobs:
+  report:
+    name: "📊 Create report"
+    runs-on: ubuntu-latest
+    steps:
+      - name: "📫 Checkout"
+        uses: actions/checkout@v2
+      - name: "🧱 Setup Ruby"
+        uses: ruby/setup-ruby@v1.90.0
+        with:
+          ruby-version: 2.7
+          bundler-cache: true
+      - name: "📊 Scan"
+        run: bin/scan
