@@ -1,0 +1,96 @@
+#!/usr/bin/env ruby
+ENV['BUNDLE_GEMFILE'] ||= File.expand_path('../Gemfile', __dir__)
+require "bundler/setup" # Set up gems listed in the gems.rb.
+Bundler.require
+require 'active_support/all'
+
+require 'optparse'
+@options = {
+  show_progress: true,
+  show_info: true,
+  keywords: false,
+}
+@info = {}
+OptionParser.new do |opts|
+  opts.on("-V", "--version", "Show version information") do
+    puts "Version 0.0.1 of the Postzegelbosjes scanner for Ghent"
+    exit
+  end
+  opts.on("-p", "--[no-]progress", "Show progress bar") do |v|
+    @options[:show_progress] = v
+  end
+  opts.on("-i", "--[no-]info", "Show run info") do |v|
+    @options[:show_info] = v
+  end
+  opts.on("--keywords", "Show the list of keywords") do |v|
+    @options[:keywords] = v
+  end
+end.parse!
+
+START_URL = "https://gent.consultatieomgeving.net/Burger/nl/OpenbareOnderzoeken"
+KEYWORD_LIST = %w(
+  boscompensatie
+)
+
+if @options[:keywords]
+  puts KEYWORD_LIST
+  exit
+end
+
+agent = Mechanize.new
+index_page = agent.get(START_URL)
+
+@info = {
+  source: START_URL,
+  start_time: Time.now,
+}
+
+progressbar = ProgressBar.create if @options[:show_progress]
+
+detected_links = index_page
+  .links
+  .tap { |links|
+    @info[:all_links_count] = links.count
+  }
+  .select{|l| l.resolved_uri.to_s =~ /Burger\/nl\/OpenbareOnderzoeken\/Details/ }
+  .tap { |links|
+    if progressbar
+      progressbar.total = links.size
+    end
+    @info[:considered_links_count] = links.count
+  }
+  .map { |l|
+    progressbar.increment if progressbar
+    page = l.click
+    [
+      l, page.at('body').text.squish
+    ]
+  }
+  .select { |_, body_text|
+    KEYWORD_LIST.find { |keyword|
+      body_text =~ /#{keyword}/i
+    }
+  }
+  .map { |link, _|
+    link
+  }
+
+progressbar.finish if progressbar
+
+@info[:end_time] = Time.now
+@info[:detected_links_count] = detected_links.count
+
+detected_links
+  .each { |l|
+    puts "#{l.text}\n\t#{l.resolved_uri}"
+  }
+
+if @options[:show_info]
+  puts "\n"
+  puts <<~TEXT
+    We scanned #{@info[:source]} and found #{@info[:all_links_count]} links.
+    Of those links #{@info[:considered_links_count]} where considered.
+    Of those links #{@info[:detected_links_count]} where found to contain one of our keywords.
+    It took #{(@info[:end_time] - @info[:start_time]).round} seconds to complete.
+  TEXT
+end
