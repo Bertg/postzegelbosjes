@@ -18,4 +18,24 @@ jobs:
           ruby-version: 2.7
           bundler-cache: true
       - name: "📊 Scan"
-        run: bin/scan
+        id: scan
+        run: |
+          REPORT=$(bin/scan)
+          echo $REPORT
+          REPORT="${REPORT//'%'/'%25'}"
+          REPORT="${REPORT//$'\n'/'%0A'}"
+          REPORT="${REPORT//$'\r'/'%0D'}"
+          echo "::set-output name=report::$REPORT"
+      - name: Send mail
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: smtp.gmail.com
+          server_port: 465
+          secure: true
+          username: ${{secrets.MAIL_USERNAME}}
+          password: ${{secrets.MAIL_PASSWORD}}
+          from: Postzegelbos Scanner
+          to:  ${{secrets.MAIL_TO}}
+          subject: Postzegelbos report - Ghent
+          body: "${{ steps.scan.outputs.report }}"
+          convert_markdown: true
