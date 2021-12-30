@@ -31,7 +31,24 @@ end.parse!
 START_URL = "https://gent.consultatieomgeving.net/Burger/nl/OpenbareOnderzoeken"
 KEYWORD_LIST = %w(
   boscompensatie
+  rooien
+  rooi*
+  kap*
+  vellen
+  bosbalans
+  bebossing
+  bebossingsplan
 )
+NEGATIVE_KEYWORD_LIST = %w(
+  kapel*
+)
+
+KEYWORD_LIST_MATCHES = KEYWORD_LIST.map { |keyword|
+  /\A#{keyword.gsub('*', '[[:alpha:]]*')}\Z/i
+}
+NEGATIVE_KEYWORD_LIST_MATCHES = NEGATIVE_KEYWORD_LIST.map { |keyword|
+  /\A#{keyword.gsub('*', '[[:alpha:]]*')}\Z/i
+}
 
 if @options[:keywords]
   puts KEYWORD_LIST
@@ -64,16 +81,26 @@ detected_links = index_page
     progressbar.increment if progressbar
     page = l.click
     [
-      l, page.at('body').text.squish
+      l,
+      page.at('body').text.squish.scan(/\w+/)
     ]
   }
-  .select { |_, body_text|
-    KEYWORD_LIST.find { |keyword|
-      body_text =~ /#{keyword}/i
-    }
+  .map { |l, tokens|
+    selected_tokens = tokens
+      .select { |token|
+        KEYWORD_LIST_MATCHES.any? { |m|
+          token =~ m
+        }
+      }
+      .reject { |token|
+        NEGATIVE_KEYWORD_LIST_MATCHES.any? { |m|
+          token =~ m
+        }
+      }
+    [l, selected_tokens]
   }
-  .map { |link, _|
-    link
+  .select { |_, matches|
+    matches.any?
   }
 
 progressbar.finish if progressbar
@@ -81,9 +108,14 @@ progressbar.finish if progressbar
 @info[:end_time] = Time.now
 @info[:detected_links_count] = detected_links.count
 
+def format_keywords(words)
+  words.sort.group_by(&:itself).map {|w, occ| occ.one? ? w : "#{w} (x#{occ.size})" }.join(", ")
+end
+
 detected_links
-  .each { |l|
+  .each { |l, tokens|
     puts "#{l.text}\n\t#{l.resolved_uri}"
+    puts "\tkeywords: #{format_keywords(tokens)}"
   }
 
 if @options[:show_info]
