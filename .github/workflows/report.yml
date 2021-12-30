@@ -20,12 +20,8 @@ jobs:
       - name: "📊 Scan"
         id: scan
         run: |
-          REPORT=$(bin/scan --no-progress)
-          echo $REPORT
-          REPORT="${REPORT//'%'/'%25'}"
-          REPORT="${REPORT//$'\n'/'%0A'}"
-          REPORT="${REPORT//$'\r'/'%0D'}"
-          echo "::set-output name=report::$REPORT"
+          bin/scan > report.md
+          cat report.md
       - name: Send mail
         uses: dawidd6/action-send-mail@v3
         with:
@@ -37,5 +33,6 @@ jobs:
           from: Postzegelbos Scanner
           to:  ${{secrets.MAIL_TO}}
           subject: Postzegelbos report - Ghent
-          body: "${{ steps.scan.outputs.report }}"
+          body: file://report.md
+          html_body: file://report.md
           convert_markdown: true
