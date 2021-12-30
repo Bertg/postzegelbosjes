@@ -20,7 +20,7 @@ jobs:
       - name: "📊 Scan"
         id: scan
         run: |
-          REPORT=$(bin/scan)
+          REPORT=$(bin/scan --no-progress)
           echo $REPORT
           REPORT="${REPORT//'%'/'%25'}"
           REPORT="${REPORT//$'\n'/'%0A'}"

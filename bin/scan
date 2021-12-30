@@ -112,14 +112,22 @@ def format_keywords(words)
   words.sort.group_by(&:itself).map {|w, occ| occ.one? ? w : "#{w} (x#{occ.size})" }.join(", ")
 end
 
+puts "# Report for #{Time.now.strftime('%Y/%m/%d')}\n\n"
+
 detected_links
   .each { |l, tokens|
-    puts "#{l.text}\n\t#{l.resolved_uri}"
-    puts "\tkeywords: #{format_keywords(tokens)}"
+    puts <<~TEXT
+      ## #{l.text}
+
+      **link:** #{l.resolved_uri}
+      **keywords:** #{format_keywords(tokens)}
+
+    TEXT
   }
 
+puts "# Report detail\n\n"
+
 if @options[:show_info]
-  puts "\n"
   puts <<~TEXT
     We scanned #{@info[:source]} and found #{@info[:all_links_count]} links.
     Of those links #{@info[:considered_links_count]} where considered.
