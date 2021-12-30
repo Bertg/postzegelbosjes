@@ -20,7 +20,7 @@ jobs:
       - name: "📊 Scan"
         id: scan
         run: |
-          bin/scan > report.md
+          bin/scan --no-progress > report.md
           cat report.md
       - name: Send mail
         uses: dawidd6/action-send-mail@v3
