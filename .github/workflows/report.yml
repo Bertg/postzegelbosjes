@@ -34,7 +34,7 @@ jobs:
           name: report
           path: report.md
       - name: "📬 Send mail"
-        if: ${{ github.event_name == '' || github.event.inputs.send_mail }}
+        if: ${{ github.event_name == 'schedule' || github.event.inputs.send_mail == 'true' }}
         uses: dawidd6/action-send-mail@v3
         with:
           server_address: smtp.gmail.com
