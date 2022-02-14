@@ -2,6 +2,12 @@ name: "📊 Ghent postzegelbosjes report"
 
 on:
   workflow_dispatch:
+    inputs:
+      send_mail:
+        description: 'Send email'
+        required: false
+        type: boolean
+        default: false
   schedule:
     - cron:  "0 12 * * 1-5"
 
@@ -27,7 +33,8 @@ jobs:
         with:
           name: report
           path: report.md
-      - name: Send mail
+      - name: "📬 Send mail"
+        if: ${{ github.event_name == 'schedule' || github.event.inputs.send_mail }}
         uses: dawidd6/action-send-mail@v3
         with:
           server_address: smtp.gmail.com
