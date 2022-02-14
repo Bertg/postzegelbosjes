@@ -22,6 +22,11 @@ jobs:
         run: |
           bin/scan --no-progress > report.md
           cat report.md
+      - name: "💾 Save report"
+        uses: actions/upload-artifact@v2
+        with:
+          name: report
+          path: report.md
       - name: Send mail
         uses: dawidd6/action-send-mail@v3
         with:
