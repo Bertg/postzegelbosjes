@@ -21,7 +21,7 @@ jobs:
       - name: "🧱 Setup Ruby"
         uses: ruby/setup-ruby@v1.90.0
         with:
-          ruby-version: 3.1.0
+          ruby-version: 2.7
           bundler-cache: true
       - name: "📊 Scan"
         id: scan
@@ -34,7 +34,7 @@ jobs:
           name: report
           path: report.md
       - name: "📬 Send mail"
-        if: ${{ github.event_name == 'schedule' || github.event.inputs.send_mail }}
+        if: ${{ github.event_name == '' || github.event.inputs.send_mail }}
         uses: dawidd6/action-send-mail@v3
         with:
           server_address: smtp.gmail.com
