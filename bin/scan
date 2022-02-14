@@ -56,6 +56,14 @@ if @options[:keywords]
 end
 
 agent = Mechanize.new
+# agent.cert_store = begin
+#   OpenSSL::X509::Store.new.tap do |cert_store|
+#     # Download and replace cert store when script fails:
+#     # https://curl.se/docs/caextract.html
+#     cert_store.add_file File.expand_path('../ssl/certs/cacert.pem', __dir__)
+#   end
+# end
+agent.verify_mode = OpenSSL::SSL::VERIFY_NONE
 index_page = agent.get(START_URL)
 
 @info = {
